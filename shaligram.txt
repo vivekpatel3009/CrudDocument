@@ -1,0 +1,574 @@
+$(document).ready(function () {
+    $('.tblEmployee').DataTable({
+        'paging': true,
+        'lengthChange': true,
+        'searching': true,
+        "sDom": 'Rfrtlip',
+        "pageLength": 10,
+        'info': true,
+        'autoWidth': false,
+        //'scrollX': true,
+        'lengthMenu': [[5, 10, 15, 20, 25], [5, 10, 15, 20, 25]]
+    });
+});
+
+
+
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+using WebApplication1.DBMthods;
+using WebApplication1.Models;
+namespace WebApplication1.Controllers
+{
+    public class EmployeeController : Controller
+    {
+        // GET: Employee
+        #region object class
+        EmployeeDBmodel _DB = new EmployeeDBmodel();
+        DbMethods _EM = new DbMethods();
+        #endregion
+        public ActionResult Index()
+        {
+            return View();
+        }
+        public ActionResult List(string serach)
+        {
+            try
+            {
+                List<EmployeeModel> Model = new List<EmployeeModel>();
+                Model = _EM.GetAllEmpList();
+                return PartialView("_EmployeeList", Model);
+            }
+            catch (Exception ex)
+            {
+                return RedirectToAction("Error", "Error");
+            }
+        }
+        [HttpGet]
+        public ActionResult CreateEmployee(EmployeeModel model)
+        {
+            
+                ViewBag.DeptVBLst = _DB.TblDepartments.ToList();
+                List<tblAreaOfInterest> areaofint = _DB.tblAreaOfInterests.ToList();
+                model.AreaofInterestLST = _EM.Areaofinterest(areaofint);
+           
+            return View("CreateEmployee", model);
+        }
+        [HttpPost]
+        public ActionResult CreateNewEmployee(EmployeeModel model)
+        {
+            //check if email is already exist or not
+            bool isEmailExist = _DB.Employees.Any(record => record.EmailId == model.EmailId);
+            if (true == isEmailExist)
+            {
+                // SubjectCode is already exist. Do not proceed.
+                ViewBag.DeptVBLst = _DB.TblDepartments.ToList();
+                List<tblAreaOfInterest> areaofint = _DB.tblAreaOfInterests.ToList();
+                model.AreaofInterestLST = _EM.Areaofinterest(areaofint);
+                ModelState.AddModelError("CarWheel.Number", "Error! You must have at least one wheel to avoid abrasion on your bottom");
+                return View("CreateEmployee", model);
+            }
+            else
+            {
+                var errors = ModelState
+                        .Where(x => x.Value.Errors.Count > 0)
+                        .Select(x => new { x.Key, x.Value.Errors })
+                        .ToArray();
+                if (ModelState.IsValid)
+                {
+                    if (model.Editmode != 1)
+                    {
+                        model.Editmode = 0;
+                    }
+                    string path = Server.MapPath("~/UploadPhotos/");
+                    var uploadphoto = string.Empty;
+                    for (int i = 0; i < Request.Files.Count; i++)
+                    {
+                        var file = Request.Files[i];
+                        if (file != null && file.ContentLength > 0)
+                        {
+                            var ActualfileName = Path.GetFileName(file.FileName);
+                            string fileName = Path.GetFileNameWithoutExtension(file.FileName) + Path.GetExtension(file.FileName);
+                            uploadphoto = fileName;
+                            //string targetFolder = HttpContext.Current.Server.MapPath("~/uploads/logo");
+                            string targetPath = Path.Combine(path, fileName);
+                            file.SaveAs(targetPath);
+                            //Response.TransmitFile(Server.MapPath("~/UploadPhotos/" + path));
+                            //file.SaveAs(path + Path.GetFileName(fileName));
+                        }
+                    }
+                    model.UploadPhoto = uploadphoto;
+                    _EM.addEmployeeMethod(model);
+                }
+                else
+                {
+                    ViewBag.DeptVBLst = _DB.TblDepartments.ToList();
+                    List<tblAreaOfInterest> areaofint = _DB.tblAreaOfInterests.ToList();
+                    model.AreaofInterestLST = _EM.Areaofinterest(areaofint);
+                    return View("CreateEmployee", model);
+                }
+            }
+            return RedirectToAction("Index");
+        }
+        public ActionResult EditEmployee(int id)
+        {
+            EmployeeModel model = new EmployeeModel();            
+            ViewBag.DeptVBLst = _DB.TblDepartments.ToList();
+            List<tblAreaOfInterest> areaofint = _DB.tblAreaOfInterests.ToList();
+            model.AreaofInterestLST = _EM.Areaofinterest(areaofint);
+            EmployeeModel emp = _EM.GetEmployeeDetailsById(id);
+            emp.Editmode = 1;
+            return View("CreateEmployee", emp);
+        }
+        public ActionResult DeleteEmployee(int Id)
+        {
+            bool data = _EM.deleteEmployeeMethod(Id);
+            if (data)
+            {
+                return RedirectToAction("Index", "Employee");
+            }
+            else
+            {
+                return RedirectToAction("Index");
+            }
+        }
+
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+using System;
+using System.Collections.Generic;
+using System.Data.Entity.Validation;
+using System.Linq;
+using System.Web;
+using WebApplication1.Models;
+
+namespace WebApplication1.DBMthods
+{
+    public class DbMethods
+    {
+        EmployeeDBmodel _DB = new EmployeeDBmodel();
+        public List<EmployeeModel> GetAllEmpList()
+        {
+            List<EmployeeModel> Model = new List<EmployeeModel>();
+            var data = _DB.Employees.Where(x => x.IsActive == true).ToList();
+            if (data.Count > 0)
+            {
+                var count = 0;
+                foreach (var item in data)
+                {
+                    EmployeeModel model = new EmployeeModel();
+                    count++;
+                    model.count = count;
+                    model.id = item.Id;
+                    model.EmployeeName = item.EmployeeName;
+                    model.EmailId = item.EmailId;
+                    model.ContectNumber = item.ContectNumber;
+                    model.Gender = item.Gender;
+                    model.AreaOfInterest = item.AreaOfInterest;
+                    Model.Add(model);
+                }
+            }
+            return Model;
+        }
+        public List<AreaofInterest> Areaofinterest(List<tblAreaOfInterest> modeldata)
+        {
+            List<AreaofInterest> Model = new List<AreaofInterest>();
+            if (modeldata.Count > 0)
+            {
+                foreach (var item in modeldata)
+                {
+                    AreaofInterest model = new AreaofInterest();
+                    model.ID = item.Id;
+                    model.Programming_Language = item.Name;
+                    Model.Add(model);
+                }
+            }
+            return Model;
+        }
+        public int addEmployeeMethod(EmployeeModel model)
+        {
+            if (model.Editmode == 0)
+            {
+                
+                    Employee em = new Employee();
+                    em.EmployeeName = model.EmployeeName;
+                    em.EmailId = model.EmailId;
+                    em.ContectNumber = model.ContectNumber;
+                    em.Gender = model.Gender;
+                    em.DepartmentId = model.DepartmentId;
+                    em.UploadPhoto = model.UploadPhoto;
+                    var selectedLanguage = model.AreaofInterestLST.Where(x => x.IsCheked == true).ToList<AreaofInterest>();
+                    string AOI = String.Join(",", selectedLanguage.Select(x => x.Programming_Language));
+                    em.AreaOfInterest = AOI;
+                    em.IsActive = true;
+                    _DB.Employees.Add(em);
+                    _DB.SaveChanges();
+                    return 1;// add               
+            }
+            else if (model.Editmode == 1)
+            {
+                var empdata = _DB.Employees.Where(x => x.Id == model.id).FirstOrDefault();
+                if (empdata != null)
+                {
+                    empdata.Id = model.id;
+                    empdata.EmployeeName = model.EmployeeName;
+                    empdata.EmailId = model.EmailId;
+                    empdata.ContectNumber = model.ContectNumber;
+                    empdata.Gender = model.Gender;
+                    empdata.DepartmentId = model.DepartmentId;
+                    empdata.UploadPhoto = model.UploadPhoto;
+                    _DB.SaveChanges();
+                    return 2;//edit
+                }
+            }
+            return 0;
+        }
+        public EmployeeModel GetEmployeeDetailsById(int Id)
+        {
+            EmployeeModel em = new EmployeeModel();
+            var model = _DB.Employees.Where(x => x.Id == Id).FirstOrDefault();
+            if (model != null)
+            {
+                em.EmployeeName = model.EmployeeName;
+                em.EmailId = model.EmailId;
+                em.ContectNumber = model.ContectNumber;
+                em.Gender = model.Gender;
+                em.DepartmentId = model.DepartmentId;
+                em.UploadPhoto = model.UploadPhoto;
+                em.AreaOfInterest = model.AreaOfInterest;
+                if (model.AreaOfInterest != null)
+                {
+                    List<string> tagIds = model.AreaOfInterest.Split(',').ToList<string>();
+                }
+                //Areaofinterest(tagIds)
+               // model.Editmode = 1;
+            }
+            return em;
+        }
+   //public List<AreaofInterest> Areaofinterest(List<string> data) {
+
+   //         List<AreaofInterest> Model = new List<AreaofInterest>();
+   //         List<tblAreaOfInterest> areaofint = _DB.tblAreaOfInterests.ToList();
+   //         if (areaofint.Count > 0)
+   //         {
+   //             foreach (var item in areaofint)
+   //             {
+   //                 AreaofInterest model = new AreaofInterest();
+   //                 item.Name==
+   //                 model.ID = item.Id;
+   //                 model.Programming_Language = item.Name;
+   //                 Model.Add(model);
+   //             }
+   //         }
+   //         return Model;
+
+   //     }
+        public bool deleteEmployeeMethod(int id)
+        {
+            var empdata = _DB.Employees.Where(x => x.Id == id).FirstOrDefault();
+            if (empdata != null)
+            {
+                empdata.IsActive = false;
+                _DB.SaveChanges();
+                return true;
+            }
+            return false; // delete
+        } 
+
+        //public tblAreaOfInterest tblAreaOfInterest(int Empid)
+        //{
+
+        //    return _DB.tblAreaOfInterests.Where(x => x.Id == Empid).FirstOrDefault();
+        //}
+        //public TblDepartment TblDepartment(int Empid)
+        //{
+        //    return _DB.TblDepartments.Where(x => x.id == Empid).FirstOrDefault();
+        //}
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@model WebApplication1.Models.EmployeeModel
+@{
+    /**/
+
+    ViewBag.Title = "CreateEmployee";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@using (Html.BeginForm("CreateNewEmployee", "Employee", FormMethod.Post, new { enctype = "multipart/form-data", @class = "form-horizontal", id = "createroomload" }))
+{
+    <br>
+    <br>
+    <br>
+    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+    @Html.HiddenFor(m => m.Editmode, new { @id = "Editmode" })
+    @Html.HiddenFor(m => m.id, new { @id = "id" })
+    <div class="form-group">
+        <label for="Name">Name</label>
+        @Html.TextBoxFor(x => x.EmployeeName, new { @class = "form-control", name = "EmployeeName" })
+        @Html.ValidationMessageFor(model => model.EmployeeName)
+    </div>
+    <div class="form-group">
+        <label for="Email">Email</label>
+        @Html.TextBoxFor(x => x.EmailId, "{0:dd/MM/yyyy}", new { @class = "form-control", id = "EmailId", name = "EmailId" })
+        @Html.ValidationMessageFor(model => model.EmailId)
+    </div>
+    <div class="form-group">
+        <label for="ContectNumber">Contect Number</label>
+        @Html.TextBoxFor(x => x.ContectNumber, new { @class = "form-control", name = "ContectNumber" })
+        @Html.ValidationMessageFor(model => model.ContectNumber)
+    </div>
+    @*<div class="form-group">
+            <label for="Gender">Gender</label>
+            @Html.TextBoxFor(x => x.Gender, new { @class = "form-control", id = "Gender", name = "Gender" })
+            @Html.ValidationMessageFor(model => model.Gender)
+        </div>*@
+    <div class="form-group">
+        <label for="Department">Department</label><br />
+        @Html.DropDownListFor(model => model.DepartmentId, new SelectList(ViewBag.DeptVBLst, "id", "DepartmentName"), "- Please Select Department -", new { @class = "form-control btn btn-info" })
+        @Html.ValidationMessageFor(model => model.DepartmentId)
+    </div>
+    <div class="form-group">
+        <label for="inputDiscription" class="col-sm-2 control-label">Gender</label>
+        <div class="col-sm-10" style="margin-top: 7px;">
+            @Html.RadioButtonFor(m => m.Gender, "M", Model.Gender == "M" ? new { @name = "Active", Checked = "checked" } : null)   Male
+            @Html.RadioButtonFor(m => m.Gender, "F", Model.Gender == "F" ? new { @name = "InActive", Checked = "checked" } : null)  Female
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="UploadPhoto">UploadPhoto</label><br />
+        <div class="form-group">
+            <div class="col-md-6">
+                <div class="col-sm-7">
+                    <input type="file" name="file" />
+                </div>
+            </div>
+        </div>
+    </div><br />
+    <div class="form-group">
+        <label for="Age">AreaOfInterest</label><br />
+        @if (Model.AreaofInterestLST != null)
+        {
+            for (int i = 0; i < Model.AreaofInterestLST.Count; i++)
+            {
+                if (i % 4 == 0)
+                {
+                    @:
+                    <tr></tr>
+                }
+                <td>
+                    @Html.CheckBoxFor(x => x.AreaofInterestLST[i].IsCheked, new { @class = "custom-checkbox" })
+                    <label>@Model.AreaofInterestLST[i].Programming_Language</label>
+                    @Html.HiddenFor(x => x.AreaofInterestLST[i].ID)
+                    @Html.HiddenFor(x => x.AreaofInterestLST[i].Programming_Language)
+                </td>
+            }
+        }
+    </div>
+    <button type="submit" class="btn btn-default">Save</button>
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@model IList<WebApplication1.Models.EmployeeModel>
+<div style="width: 100%;" class="partialclassdiv">
+    <div class="table-responsive" style="width: 98%;">
+        <table class="table  table-bordered  table-striped  tblEmployee" cellspacing="0">
+            <thead>
+                <tr class="">
+                    <th class="tblheader">No.</th>
+                    <th class="tblheader">Name</th>
+                    <th class="tblheader">Email</th>
+                    <th class="tblheader">Contact Number</th>
+                    <th class="tblheader">Gender</th>
+                    <th class="tblheader">AOF</th>
+                    <th class="cls_action tblheader">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                <tr id="@item.id" class="">
+                    <td class=" tblheader">
+                        @item.count
+                    </td>
+                    <td class=" tblheader">
+                        @item.EmployeeName
+                    </td>
+                    <td class=" tblheader">
+                        @item.EmailId
+                    </td>
+                    <td class=" tblheader">
+                        @item.ContectNumber
+                    </td>
+                    <td class=" tblheader">
+
+                        @if (item.Gender == "M")
+                        { <p>Male</p> }
+                        else
+                        {
+                          <p>Female</p>
+                        }
+                    </td>  
+                    <td class=" tblheader">
+                        @item.AreaOfInterest
+                    </td>
+                    <td class=" tblheader" style=" text-align: -webkit-center">
+                        @*  <input type="checkbox" data-toggle="toggle" id="toggletrigger_@item.id" @(item.Status == 1 ? "checked=\"checked\"" : "") onchange="fonctionTest('@item.FloorId', '@item.Status')" />*@
+                
+                        @Html.ActionLink(".", "EditEmployee", "Employee", new { Id = item.id }, new { @class = "fas fa-edit" })
+                        @Html.ActionLink(".", "DeleteEmployee", "Employee", new { Id = item.id }, new { @class = "fas fa-trash" })
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css" integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay" crossorigin="anonymous">
+<section class="content">
+    <!-- Default box -->
+    <div class="box">
+        <div class="box-header with-border">
+            <h3 class="box-title">Manage Employee</h3>
+        </div>
+        <div class="box-body">
+            <div class="innerContent">
+                <!-- Add Room Type -->
+                <div class="col-md-3 pull-left">
+                    @Html.ActionLink("Add", "CreateEmployee", "Employee", null, new { @class = "btn btn-info" })
+                    @*<button id='addEmpNew' class="btn btn-info" data-toggle="modal" data-target="#popupmodel">Add New</button>*@
+                </div>
+                <div class="bodyContent FloorTableDiv Employeediv">
+                    @Html.Action("List", "Employee")
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="Deletepopup" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">Confirm</h4>
+                </div>
+                <div class="modalbodypopup">
+                    @*<h1>Are you Sure want to delete?</h1>*@
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="DeleteUser" class="btn btn-default" data-dismiss="modal">Delete</button>
+                    @*   <button type="button" class="btn btn-primary">Save changes</button>*@
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /.box -->
+</section>
+
