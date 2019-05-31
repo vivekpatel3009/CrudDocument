@@ -1,0 +1,896 @@
+add form
+
+
+
+@model Crud_applicaton.Models.EmployeeModel
+<div class="panel-group">
+    <div class="panel-default">
+        <div class="panel-body">
+            <div class="col-sm-8 col-sm-offset-2">
+                @*@using (Html.BeginForm("AddEmployee", "Employee", FormMethod.Post, new { @id = "formsubmit" }))
+                {*@
+                <form>
+                    @*@Html.HiddenFor(m => m.id, new { @id = "idGt" })*@
+                    @Html.HiddenFor(m => m.Editmode, new { @id = "Editmode" })
+                    @Html.HiddenFor(m => m.id, new { @id = "id" })
+                    @*<div class="form-group">
+            <label for="EmployeeId">ID</label>
+            <input type="text" class="form-control" id="EmployeeID" placeholder="Id" disabled="disabled" />
+        </div>*@
+                    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                    <div class="form-group">
+                        <label for="Name">Name</label>
+                        @Html.TextBoxFor(x => x.name, new { @class = "form-control", name = "name" })
+                        @Html.ValidationMessageFor(model => model.name, "", new { @class = "text-danger" })
+                        @*<input type="text" class="form-control" id="EMPName" name="EMPName" placeholder="Name" />*@
+                    </div>
+                    <div class="form-group">
+                        <label for="Age">DOB</label>
+                        @Html.TextBoxFor(x => x.bithday, new { @class = "form-control", id = "bithday", name = "bithday" })
+                        @*<input type="text" class="form-control" id="bithday" placeholder="DOB" />*@
+                    </div>
+                    <div class="form-group">
+                        <label for="Age">Contry</label>
+                        @Html.DropDownListFor(model => model.ContryID, new SelectList(ViewBag.ContryListVB, "ContryId", "ContryName"), "- Please Select Contry -", new { @class = "form-control" })
+                        @Html.ValidationMessageFor(model => model.ContryID)
+                    </div>
+                    <div class="form-group">
+                        <label for="Age">State</label>
+                        @Html.DropDownListFor(model => model.StateID, new SelectList(ViewBag.FloorListVB, "StateId", "StateName"), "- Please Select State -", new { @class = "form-control" })
+                        @Html.ValidationMessageFor(model => model.StateID)
+                    </div>
+
+                    <div class="form-group">
+                        <label for="Age">City</label>
+                        @Html.DropDownListFor(model => model.CityID, new SelectList(ViewBag.CityListVB, "CityId", "CityName"), "- Please Select City -", new { @class = "form-control" })
+                        @Html.ValidationMessageFor(model => model.CityID)
+                    </div>
+                    <div class="form-group">
+                        <label for="inputDiscription" class="col-sm-2 control-label">Gender</label>
+                        <div class="col-sm-10" style="margin-top: 7px;">
+                            @Html.RadioButtonFor(m => m.Gender, true, Model.Gender == true ? new { @name = "male", Checked = "checked" } : null)   Male
+                            @Html.RadioButtonFor(m => m.Gender, false, Model.Gender == false ? new { @name = "female", Checked = "checked" } : null)  Female
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success btn-block" id="submitdata">Form submit</button>
+                    @*<button type="button" class="btn btn-success btn-block" id="updaterecord" onclick="Updatesubmit()">Update Record</button>*@
+                    @* }*@
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+
+    //$("#formsubmit").submit(function () {
+    //    function validate() {
+    //        var isValid = true;
+    //        if ($('#Name').val().trim() == "") {
+    //            $('#Name').css('border-color', 'Red');
+    //            isValid = false;
+    //        }
+    //        return isValid;
+    //    }
+    //});
+    //country on change
+    $("#ContryID").change(function () {
+        $("#StateID").empty();
+        $.ajax({
+            type: 'POST',
+            url: '/Employee/ContryChange',
+            dataType: 'json',
+            data: { id: $("#ContryID").val() },
+            success: function (city) {
+
+                $.each(city, function (i, city) {
+                    $("#StateID").append('<option value="'
+                        + city.Value + '">'
+                        + city.Text + '</option>');
+                });
+            },
+            error: function (ex) {
+                alert('Failed.' + ex);
+            }
+        });
+        return false;
+    })
+    //Satet on change
+    $("#StateID").change(function () {
+        debugger;
+        $("#CityID").empty();
+        $.ajax({
+            type: 'POST',
+            url: '/Employee/StateChange',
+            dataType: 'json',
+            data: { id: $("#StateID").val() },
+            success: function (city) {
+
+                $.each(city, function (i, city) {
+                    $("#CityID").append('<option value="'
+                        + city.Value + '">'
+                        + city.Text + '</option>');
+                });
+            },
+            error: function (ex) {
+                alert('Failed.' + ex);
+            }
+        });
+        return false;
+    })
+</script>
+
+
+
+
+
+
+
+
+js file
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//Valdidation using jquery
+function validate() {
+    var isValid = true;
+    //if ($('#Name').val().trim() == "") {
+    //    $('#Name').css('border-color', 'Red');
+    //    isValid = false;
+    //}
+    //else {
+    //    $('#Name').css('border-color', 'lightgrey');
+    //}
+    //if ($('#Age').val().trim() == "") {
+    //    $('#Age').css('border-color', 'Red');
+    //    isValid = false;
+    //}
+    //else {
+    //    $('#Age').css('border-color', 'lightgrey');
+    //}
+    //if ($('#State').val().trim() == "") {
+    //    $('#State').css('border-color', 'Red');
+    //    isValid = false;
+    //}
+    //else {
+    //    $('#State').css('border-color', 'lightgrey');
+    //}
+    //if ($('#Country').val().trim() == "") {
+    //    $('#Country').css('border-color', 'Red');
+    //    isValid = false;
+    //}
+    //else {
+    //    $('#Country').css('border-color', 'lightgrey');
+    //}
+
+    if ($('#name').val() == "") {
+        $('#name').css('border-color', 'Red');
+        isValid = false;
+    }
+    if ($('#bithday').val() == "") {
+        $('#bithday').css('border-color', 'Red');
+        isValid = false;
+    }
+    if ($('#ContryID').val() == "") {
+        $('#ContryID').css('border-color', 'Red');
+        isValid = false;
+    }
+    if ($('#name').val() == "") {
+        $('#name').css('border-color', 'Red');
+        isValid = false;
+    } if ($('#name').val() == "") {
+        $('#name').css('border-color', 'Red');
+        isValid = false;
+    }
+    return isValid;
+}
+
+
+
+
+//Add Data Function 
+function Add() {
+    alert("caled")
+    var res = validate();
+    if (res == false) {
+        return false;
+    }
+    var empObj = {
+        //EmployeeID: $('#EmployeeID').val(),
+        name: $('#name').val(),
+        bithdaytxt: $('#bithday').val(),
+        ContryID: $('#ContryID').val(),
+        StateID: $('#StateID').val(),
+        CityID: $('#CityID').val(),
+        Editmode: $('#Editmode').val(),
+        id: $('#id').val(),
+        Gender: $('#Gender').val()
+    };
+    $.ajax({
+        url: "/Employee/AddEmployee",
+        data: JSON.stringify(empObj),
+        type: "POST",
+        contentType: "application/json;charset=utf-8",
+        dataType: "json",
+        success: function (result) {
+            //loadData();
+            $('#popupmodel').modal('hide');
+        },
+        error: function (errormessage) {
+            alert(errormessage.responseText);
+        }
+    });
+}
+$('.modal').on('shown.bs.modal', function () {
+    $('#bithday').datepicker({
+        format: "dd/mm/yyyy",
+        orientation: "top",
+        //startDate: "01-01-2015",
+        //endDate: "01-01-2020",
+        todayBtn: "linked",
+        autoclose: true,
+        todayHighlight: true,
+        container: '#popupmodel modalbodypopup'
+    });
+});
+$(document).ready(function () {
+
+    $("#myModal").show();
+    $('.tblEmployee').DataTable({
+        'paging': true,
+        'lengthChange': true,
+        'searching': true,
+        "sDom": 'Rfrtlip',
+        "pageLength": 10,
+        //'ordering': true,
+        //'info': true,
+        'autoWidth': false,
+        //'scrollX': true,
+        //  'lengthMenu': [[5, 10, 15, 20, 25], [5, 10, 15, 20, 25]],
+        //"fixedColumns": true,
+        //"sScrollX": "100%",
+        //"sScrollXInner": "100%",
+        //"bScrollCollapse": true,
+        //"columnDefs": [{
+        //    "targets": 'countclass',
+        //    "orderable": false,
+        //}]
+    });
+});
+//addnew popup
+$("#addEmpNew").click(function () {
+    var options = {
+        "backdrop": "static",
+        keyboard: true
+    };
+    $.ajax({
+        type: 'GET',
+        url: '/Employee/CreateEmployee',
+        contentType: "application/json; charset=utf-8",
+        datatype: "json",
+        success: function (data) {
+            debugger;
+            $('.modalbodypopup').html(data);
+            $('#popupmodel').modal(options);
+            $('#popupmodel').modal('show');
+            $("#bithday").val("");
+
+        },
+        error: function () {
+            alert("Content load failed.");
+        }
+    });
+});
+
+//country on change
+$("#ContryID").change(function () {
+    debugger;
+    $("#StateID").empty();
+    $.ajax({
+        type: 'POST',
+        url: '/Employee/ContryChange',
+        dataType: 'json',
+        data: { id: $("#ContryID").val() },
+        success: function (city) {
+
+            $.each(city, function (i, city) {
+                $("#StateID").append('<option value="'
+                    + city.Value + '">'
+                    + city.Text + '</option>');
+            });
+        },
+        error: function (ex) {
+            alert('Failed.' + ex);
+        }
+    });
+    return false;
+})
+
+//deleteuser popup
+$("#Deletepopup").on("click", "#DeleteUser", function () {
+    // $("#DeleteUser").click(function () {
+    debugger;
+    var deleteuser = $("#HiddenEmployeeid").val();
+    $.ajax({
+        type: 'POST',
+        data: { Id: deleteuser },
+        url: '/Employee/DeleteEmployee',
+        success: function (response) {
+            window.location.reload();
+        }
+    });
+})
+
+$(".Employeediv").on("click", "a[id*='Editempbtn_']", function () {
+    var id = this.id.split('_')[1];
+    // var id = $(this).parent().find('#hdnRoomId').val()
+    EmployeeEdit(id);
+});
+//$("#DeleteUser").click(function () {
+$(".Employeediv").on("click", "a[id*='Deleteempbtn_']", function () {
+    debugger;
+    var id = this.id.split('_')[1];
+    // var id = $(this).parent().find('#hdnRoomId').val()
+    EmployeeDelete(id);
+});
+function EmployeeEdit(id) {
+    debugger;
+    var options = {
+        "backdrop": "static",
+        keyboard: true
+    };
+    $.ajax({
+        type: 'POST',
+        data: { id: id },
+        url: '/Employee/EditEmployee',
+        success: function (data) {
+            $('.modalbodypopup').html(data);
+            //$('#popupmodel').modal(options);
+            //$('#popupmodel').modal('show');
+        },
+        error: function () {
+            alert("Content load failed.");
+        }
+    });
+}
+function EmployeeDelete(id) {
+    debugger;
+    var $description = $('<div/>');
+    $description.append($('<p/>').html('<h3> Are you sure you want to permanently Delete Employee?  </h3></br>'));
+    $description.append($('<p/>').html('<input type="hidden" id="HiddenEmployeeid" name="custId" value=' + id + '></br>'));
+    $('#Deletepopup .modalbodypopup').empty().html($description);
+    $('#Deletepopup').modal();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+index file
+
+
+
+
+
+
+@*<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">*@
+@*<link href="~/Content/datepicker.css" rel="stylesheet" />*@
+@*<script src="~/Scripts/jquery-3.3.1.min.js"></script>*@
+@*<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>*@
+@*<script src="~/Scripts/bootstrap-datepicker.js"></script>
+    <script src="~/Scripts/dataTables.bootstrap.min.js"></script>*@
+@*<link href="~/Content/fontawesome.css" rel="stylesheet" />*@
+@*<script src="~/Scripts/fontawesome.min.js"></script>*@
+<link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css" rel="stylesheet">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css" integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay" crossorigin="anonymous">
+@*<style>
+    .datepicker {
+        z-index: 1600 !important; /* has to be larger than 1050 */
+    }
+</style>*@
+@*<link href="~/Content/bootstrap.min.css" rel="stylesheet" />*@
+<section class="content">
+    <!-- Default box -->
+    <div class="box">
+        <div class="box-header with-border">
+            <h3 class="box-title">Manage Employee</h3>
+        </div>
+        <div class="box-body">
+            <div class="innerContent">
+                <!-- Add Room Type -->
+                <div class="col-md-3 pull-left">
+                    @*  @Html.ActionLink("Create New Employee", "Create", "Employee", null, new { @class = "btn btn-primary  btn-block" })*@
+                    @*<button class="btn btn-success" id="CreateNew" data-toggle="modal" data-backdrop="static" data-target="#popup">Create New </button>*@
+                    @*<button id='showGame' class="btn btn-primary">Add New</button>*@
+                    <button id='addEmpNew' class="btn btn-info" data-toggle="modal" data-target="#popupmodel">Add New</button>
+                </div>
+                <div class="bodyContent FloorTableDiv Employeediv">
+                    @Html.Action("List", "Employee")
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id='gameModal' class='' data-url='@Url.Action("CreateEmployee")'>
+        <div id='gameContainer'>
+        </div>
+    </div>
+    <div class="modal fade" id="popupmodel" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">Manage employee</h4>
+                </div>
+                <div class="modalbodypopup">
+
+                </div>
+                <div class="modal-footer">
+                    @*<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>*@
+                    <button type="button"  id="btnAdd" onclick="return Add();" class="btn btn-primary">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="Deletepopup" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">Confirm</h4>
+                </div>
+                <div class="modalbodypopup">
+                    @*<h1>Are you Sure want to delete?</h1>*@
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="DeleteUser" class="btn btn-default" data-dismiss="modal">Delete</button>
+                    @*   <button type="button" class="btn btn-primary">Save changes</button>*@
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /.box -->
+</section>
+<script>
+    $(document).ready(function () {
+        debugger;
+        var tempdataval = '@TempData["create"]';
+        if (tempdataval == "created") {
+            toastr.success('vivek');
+        }
+    });
+    $('.modal').on('shown.bs.modal', function () {
+        $('#bithday').datepicker({
+            format: "dd/mm/yyyy",
+            //startDate: "01-01-2015",
+            //endDate: "01-01-2020",
+            todayBtn: "linked",
+            autoclose: true,
+            todayHighlight: true,
+            //container: '#myModal modal-body'
+        });
+    });</script>
+<script src="~/Scripts/Employee.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+controller
+
+
+
+
+
+
+
+
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+using Crud_applicaton.Models;
+using PracticleCRUD.Models;
+using AutoMapper;
+using PracticleCRUD.ModelClass;
+
+namespace Crud_applicaton.Controllers
+{
+    public class EmployeeController : Controller
+    {
+        TestEntities _DB = new TestEntities();
+        EmployeeDBClass ed = new EmployeeDBClass();
+        // GET: Employee
+        public ActionResult Index()
+        {
+            return View();
+        }
+        [HandleError]
+        public ActionResult List(string serach)
+        {
+            try
+            {
+                List<EmployeeModel> Model = new List<EmployeeModel>();
+                var emplist = _DB.Employees.Where(x => x.IsActive == true).ToList();
+                List<EmployeeModel> list = Mapper.Map<List<Employee>, List<EmployeeModel>>(emplist);
+                List<EmployeeModel> mapedemployee= ed.mapEmployee(list);
+                return PartialView("_EmployeeList", mapedemployee);
+            }
+            catch (Exception ex)
+            {
+                return RedirectToAction("Error", "Error", new { ReturnUrl = "/Floor" });
+            }
+        }
+        [HttpGet]
+        public ActionResult CreateEmployee(EmployeeModel model)
+        {
+            ViewBag.ContryListVB = _DB.ContryTbls.ToList();
+            ViewBag.FloorListVB = _DB.StateTbls.ToList();
+            ViewBag.CityListVB = _DB.CityTbls.ToList();
+            //Li = _DB.AreaOfIntrests.ToList<AOIClass>(); 
+            model.Editmode = 0;
+            return PartialView("_addEditEmployee", model);
+        }
+        [HttpPost]
+        public ActionResult AddEmployee(EmployeeModel model)
+        {
+            var errors = ModelState.Select(x => x.Value.Errors)
+                          .Where(y => y.Count > 0)
+                          .ToList();
+           // if (ModelState.IsValid)
+            //{
+                int status = ed.addEmployeeMethod(model);
+                if (status == 1)
+                {
+                    TempData["create"] = "created";
+                }
+                else if (status == 2)
+                {
+                    TempData["Updated"] = "Updated";
+                }
+            //}
+            //else {
+
+            //    if (model.name == "") {
+            //        TempData["Updated"] = "Updated";
+            //    }
+            //}
+            //   return RedirectToAction("Index");
+            return Json(status, JsonRequestBehavior.AllowGet);
+        }
+        public ActionResult EditEmployee(int id)
+        {
+            if (id == 0)
+            {
+                return null;
+            }           
+            ViewBag.ContryListVB = _DB.ContryTbls.ToList();
+            EmployeeModel emp = ed.GetEmployeeDetailsById(id);
+            ViewBag.FloorListVB = _DB.StateTbls.Where(x=>x.ContryId==emp.ContryID).ToList();
+            ViewBag.CityListVB = _DB.CityTbls.Where(x => x.StateId == emp.StateID).ToList();
+            emp.Editmode = 1;
+            if (emp == null)
+            {
+                return null;
+            }
+            return PartialView("_addEditEmployee", emp);
+        }
+        public ActionResult DeleteEmployee(int Id)
+        {
+            bool data = ed.deleteEmployeeMethod(Id);
+            if (data)
+            {
+                return RedirectToAction("Index", "Employee");
+            }
+            else
+            {
+                return RedirectToAction("Index");
+            }
+        }        
+        public JsonResult ContryChange(int id)
+        {
+            var ddlContry = _DB.StateTbls.Where(x => x.ContryId == id).ToList();
+            List<SelectListItem> liContries = new List<SelectListItem>();
+            liContries.Add(new SelectListItem { Text = "--Select State--", Value = "0" });
+            if (ddlContry != null)
+            {
+                foreach (var x in ddlContry)
+                {
+                    liContries.Add(new SelectListItem { Text = x.StateName, Value = x.StateId.ToString() });
+                }
+            }
+            return Json(new SelectList(liContries, "Value", "Text", JsonRequestBehavior.AllowGet));
+        }
+        public JsonResult StateChange(int id)
+        {
+            var ddlCity = _DB.CityTbls.Where(x => x.StateId == id).ToList();
+            List<SelectListItem> liCities = new List<SelectListItem>();
+            liCities.Add(new SelectListItem { Text = "--Select City--", Value = "0" });
+            if (ddlCity != null)
+            {
+                foreach (var x in ddlCity)
+                {
+                    liCities.Add(new SelectListItem { Text = x.CityName, Value = x.CityId.ToString() });
+                }
+            }
+            return Json(new SelectList(liCities, "Value", "Text", JsonRequestBehavior.AllowGet));
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Web;
+using Crud_applicaton.Controllers;
+using Crud_applicaton.Models;
+
+namespace Crud_applicaton.Models
+{
+
+    public class EmployeeModel
+    {
+        public int count { get; set; }
+        public int id { get; set; }
+        [Required(ErrorMessage = "Please enter name"), MaxLength(30)]
+        public string name { get; set; }
+        [Required]
+        public DateTime bithday { get; set; }
+        public string bithdaytxt { get; set; }
+
+        public string State { get; set; }        
+        public string Contry { get; set; }
+        public string City { get; set; }
+        [Required]
+        public int StateID { get; set; }
+        [Required]
+        public int ContryID { get; set; }
+        [Required]
+        public int CityID { get; set; }
+        public int Editmode { get; set; }
+        public List<AOIClass> Aoi { get; set; }
+        public bool Gender  { get; set; }
+        //public date bithday { get; set; }
+    }
+    public class AOIClass
+    {
+        public int ID { get; set; }
+        public string AreaOfInterest { get; set; }
+        public bool IsCheked { get; set; }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+model db class
+
+
+
+
+using Crud_applicaton.Models;
+using PracticleCRUD.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+namespace PracticleCRUD.ModelClass
+{
+    public class EmployeeDBClass
+    {
+        TestEntities _DB = new TestEntities();
+        public List<EmployeeModel> GetAllEmpList()
+        {
+            List<EmployeeModel> Model = new List<EmployeeModel>();
+            var data = _DB.Employees.ToList();
+            if (data.Count > 0)
+            {
+                var count = 0;
+                foreach (var item in data)
+                {
+                    EmployeeModel model = new EmployeeModel();
+                    count++;
+                    model.count = count;
+                    model.id = item.id;
+                    model.name = item.name;
+                    model.bithday = (DateTime)item.bithday;
+                    var Contrydata = Getcontryname((int)item.ContryID);//item.ContryID;
+                    var Statedata = Getstatename((int)item.StateID);//item.ContryID;
+                    if (Contrydata != null)
+                    {
+                        model.Contry = Contrydata.ContryName;
+                    }
+                    if (Statedata != null)
+                    {
+                        model.State = Statedata.StateName;
+                    }
+                    Model.Add(model);
+                }
+            }
+            return Model;
+        }
+        public int addEmployeeMethod(EmployeeModel model)
+        {
+            if (model.Editmode == 0)
+            {
+                Employee em = new Employee();
+                em.name = model.name;
+                em.bithday = DateTime.Now;
+                em.ContryID = model.ContryID;
+                em.StateID = model.StateID;
+                em.CityID = model.CityID;
+                //em.gender = model.Gender;
+                em.IsActive = true;
+                _DB.Employees.Add(em);
+                _DB.SaveChanges();
+                return 1;//add
+            }
+            else 
+            {
+                var empdata = _DB.Employees.Where(x => x.id == model.id).FirstOrDefault();
+                if (empdata != null)
+                {
+                    empdata.id = model.id;
+                    empdata.name = model.name;
+                    empdata.bithday = DateTime.Now;//model.bithday;
+                    empdata.ContryID = model.ContryID;
+                    empdata.StateID = model.StateID;
+                    empdata.CityID = model.CityID;
+                    //em.gender = model.Gender;
+                    _DB.SaveChanges();
+                }
+                return 2;//edit
+            }
+        }
+        public bool deleteEmployeeMethod(int id)
+        {
+            var empdata = _DB.Employees.Where(x => x.id == id).FirstOrDefault();
+            if (empdata != null)
+            {
+                empdata.IsActive = false;
+                _DB.SaveChanges();
+                return true;
+            }
+            return false; // delete
+        }
+        public List<EmployeeModel> mapEmployee(List<EmployeeModel> modeldata)
+        {
+            List<EmployeeModel> Model = new List<EmployeeModel>();
+            if (modeldata.Count > 0)
+            {
+                var count = 0;
+                foreach (var item in modeldata)
+                {
+                    EmployeeModel model = new EmployeeModel();
+                    count++;
+                    model.count = count;
+                    model.id = item.id;
+                    model.name = item.name;
+                    model.bithday = (DateTime)item.bithday;
+                    //em.gender = item.Gender;
+                    var Contrydata = Getcontryname((int)item.ContryID);//item.ContryID;
+                    var Statedata = Getstatename((int)item.StateID);//item.ContryID;
+                    var Citydata = Getcityname((int)item.CityID);
+                    if (Contrydata != null)
+                    {
+                        model.Contry = Contrydata.ContryName;
+                    }
+                    if (Statedata != null)
+                    {
+                        model.State = Statedata.StateName;
+                    }
+                    if (Citydata != null)
+                    {
+                        model.City = Citydata.CityName;
+                    }
+                    Model.Add(model);
+                }
+            }
+            return Model;
+        }
+        public EmployeeModel GetEmployeeDetailsById(int Id)
+        {
+            EmployeeModel model = new EmployeeModel();
+            var data = _DB.Employees.Where(x => x.id == Id).FirstOrDefault();
+            if (data != null)
+            {
+                // model.Count = 1;
+                model.id = data.id;
+                model.ContryID = (int)data.ContryID;
+                model.StateID = (int)data.StateID;
+                model.CityID = (int)data.CityID;
+                model.name = data.name;
+                model.bithday = (DateTime)data.bithday;
+                //model.Gender = data.name;
+                //model.IsEdit = 1;
+            }
+            return model;
+        }
+        public ContryTbl Getcontryname(int Cid)
+        {
+
+            return _DB.ContryTbls.Where(x => x.ContryId == Cid).FirstOrDefault();
+        }
+        public StateTbl Getstatename(int sid)
+        {
+            return _DB.StateTbls.Where(x => x.StateId == sid).FirstOrDefault();
+        }
+        public CityTbl Getcityname(int cid)
+        {
+            return _DB.CityTbls.Where(x => x.CityId == cid).FirstOrDefault();
+        }
+    }
+}
