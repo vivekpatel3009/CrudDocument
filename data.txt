@@ -1,0 +1,586 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using Unity.Attributes;
+using Microsoft.Practices.Unity;
+using VIVEKPATEL_05312019_mvc.DBContext;
+using VIVEKPATEL_05312019_mvc.Models;
+using System.Runtime.CompilerServices;
+
+namespace CustomerAPI.Reepository
+{
+    public class CustomerRepository
+    {
+        [Dependency]
+        public CustomerManagementEntities context { get; set; }
+        DBCustomerMethod CM = new DBCustomerMethod();
+        public List<CustomerModel> Get()
+        {
+            List<tblCutomer> dbTblEmployee = context.tblCutomers.Where(x => x.IsACtive == true).ToList();
+            return CM.mapCustomerDB(dbTblEmployee);
+        }
+
+        public CustomerModel Get(int id)
+        {
+            return CM.GetCustomerDetailsById(id);
+        }
+        public List<tblCountry> GetContry(int id)
+        {
+            return context.tblCountries.Where(x => x.Id == id).ToList();
+        }
+        public List<tblState> GetState(int id)
+        {
+            return context.tblStates.Where(x => x.Id == id).ToList();
+        }
+        public List<tblCountry> GetContry()
+        {
+            return context.tblCountries.ToList();
+        }
+        public List<tblState> GetState()
+        {
+            return context.tblStates.ToList();
+        }
+        public int Add(CustomerModel model)
+        {
+            return CM.addCustomerMethod(model);
+        }
+        public int Update(CustomerModel model)
+        {
+            return CM.addCustomerMethod(model);
+        }
+        public bool Remove(int id)
+        {
+            return CM.deleteCustomerMethod(id);
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using VIVEKPATEL_05312019_mvc.DBContext;
+using VIVEKPATEL_05312019_mvc.Models;
+namespace CustomerAPI.Reepository
+{
+    public interface IRepository
+    {
+        List<CustomerModel> Get();
+        CustomerModel Get(int id);
+        int Add(CustomerModel entity);
+        bool Remove(int id);
+        int Update(CustomerModel entity);
+        List<tblState> GetState(int id);
+        List<tblCountry> GetContry(int id);
+        List<tblState> GetState();
+        List<tblCountry> GetContry();
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Web.Http;
+using VIVEKPATEL_05312019_mvc.Models;
+
+namespace CustomerAPI.Controllers
+{
+    [RouteAttribute("api/[controller]")]
+    public class CustomerController : ApiController
+    {
+        //baseaddress=http://localhost:53135/
+        DBCustomerMethod dc = new DBCustomerMethod();
+        [HttpGet]
+        public List<CustomerModel> Get()
+        {
+            List<CustomerModel> model= dc.GetAllEmpList();
+            return model;
+        }
+        [HttpGet]
+        public CustomerModel Get(int id)
+        {
+            CustomerModel model = dc.GetCustomerDetailsById(id);
+            return model;
+        }
+        [HttpPost]
+        public int Add(CustomerModel model)
+        {
+            int status = dc.addCustomerMethod(model);
+            return status;
+        }
+        [HttpPut]
+        public int Update(CustomerModel model)
+        {
+            int status = dc.addCustomerMethod(model);
+            return status;
+        }
+        [HttpDelete]
+        public bool Remove(int id)
+        {
+            bool status = dc.deleteCustomerMethod(id);
+            return status;
+        }       
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using Microsoft.Practices.Unity;
+using Unity.Attributes;
+using VIVEKPATEL_05312019_mvc.DBContext;
+using VIVEKPATEL_05312019_mvc.Models;
+
+namespace VIVEKPATEL_05312019_mvc.DAL
+{
+    public class CustomerRepository : IRepository
+    {
+        [Dependency]
+        public CustomerManagementEntities context { get; set; }
+        DBCustomerMethod CM = new DBCustomerMethod();
+        public List<CustomerModel> Get()
+        {
+            List<tblCutomer> dbTblEmployee = context.tblCutomers.Where(x => x.IsACtive == true).ToList();
+            return CM.mapCustomerDB(dbTblEmployee);
+        }
+
+        public CustomerModel Get(int id)
+        {
+            return CM.GetCustomerDetailsById(id);
+        }
+        public List<tblCountry> GetContry(int id)
+        {
+            return context.tblCountries.Where(x => x.Id == id).ToList();
+        }
+        public List<tblState> GetState(int id)
+        {
+            return context.tblStates.Where(x => x.Id == id).ToList();
+        }
+        public List<tblCountry> GetContry()
+        {
+            return context.tblCountries.ToList();
+        }
+        public List<tblState> GetState()
+        {
+            return context.tblStates.ToList();
+        }
+        public int Add(CustomerModel model)
+        {
+            return CM.addCustomerMethod(model);
+        }
+        public int Update(CustomerModel model)
+        {
+            return CM.addCustomerMethod(model);
+        }
+        public bool Remove(int id)
+        {
+            return CM.deleteCustomerMethod(id);
+        }
+
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+using VIVEKPATEL_05312019_mvc.DAL;
+using VIVEKPATEL_05312019_mvc.DBContext;
+using VIVEKPATEL_05312019_mvc.Models;
+
+namespace VIVEKPATEL_05312019_mvc.Controllers
+{
+    public class CustomerController : Controller
+    {
+        // GET: Customer
+        private IRepository _repository;        
+        public CustomerController(IRepository repo)
+        {
+            _repository = repo;
+        }
+        public ActionResult Index()
+        {
+            return View();
+        }
+        public ActionResult List()
+        {
+            List<CustomerModel> Emps = _repository.Get();
+
+            return PartialView("_CustomerList", Emps);
+        }
+        [HttpGet]
+        public ActionResult CreateCustomer()
+        {
+            CustomerModel Emp = new CustomerModel();
+            ViewBag.ContryListVB = _repository.GetContry();
+            ViewBag.StateListVB = _repository.GetState();
+            Emp.Editmode = 0;
+            return PartialView("_AddCustomerPartial", Emp);
+        }
+
+
+        [HttpPost]
+        public ActionResult Create(CustomerModel Emp)
+        {
+            int status =  _repository.Add(Emp);         
+            return Json(status, JsonRequestBehavior.AllowGet);
+        }        
+        [HttpPost]
+        public ActionResult Delete(int id)
+        {
+            bool status=  _repository.Remove(id);
+            return Json(status, JsonRequestBehavior.AllowGet);
+        }
+        public ActionResult EditEmployee(int id)
+        {
+          
+            ViewBag.ContryListVB = _repository.GetContry();
+            CustomerModel emp = _repository.Get(id);
+            ViewBag.StateListVB = _repository.GetState(emp.ContryID);
+            emp.Editmode = 1;
+            if (emp == null)
+            {
+                return null;
+            }
+            return PartialView("_AddCustomerPartial", emp);
+        }
+        public ActionResult DeleteEmployee(int Id)
+        {
+            bool data = _repository.Remove(Id);
+            if (data)
+            {
+                return RedirectToAction("Index", "Customer");
+            }
+            else
+            {
+                return null;
+            }
+        }
+        public JsonResult ContryChange(int id)
+        {
+            var ddlContry = _repository.GetState(id);
+            List<SelectListItem> liContries = new List<SelectListItem>();
+            liContries.Add(new SelectListItem { Text = "--Select State--", Value = "0" });
+            if (ddlContry != null)
+            {
+                foreach (var x in ddlContry)
+                {
+                    liContries.Add(new SelectListItem { Text = x.SName, Value = x.Id.ToString() });
+                }
+            }
+            return Json(new SelectList(liContries, "Value", "Text", JsonRequestBehavior.AllowGet));
+        }
+      
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using VIVEKPATEL_05312019_mvc.DBContext;
+
+namespace VIVEKPATEL_05312019_mvc.Models
+{
+    public class DBCustomerMethod
+    {
+        CustomerManagementEntities _DB = new CustomerManagementEntities();
+        public List<CustomerModel> GetAllEmpList()
+        {
+            List<CustomerModel> Model = new List<CustomerModel>();
+            var data = _DB.tblCutomers.ToList();
+            if (data.Count > 0)
+            {
+                var count = 0;
+                foreach (var item in data)
+                {
+                    CustomerModel model = new CustomerModel();
+                    count++;
+                    model.count = count;
+                    model.id = (int)item.Id;
+                    model.FirstName = item.Firstname;
+                    model.LastName = item.Lastname;
+                    var Contrydata = Getcontryname((int)item.CountryId);
+                    var Statedata = Getstatename((int)item.StateId);
+                    if (Contrydata != null)
+                    {
+                        model.Contry = Contrydata.CName;
+                    }
+                    if (Statedata != null)
+                    {
+                        model.State = Statedata.SName;
+                    }
+                    Model.Add(model);
+                }
+            }
+            return Model;
+        }
+        public int addCustomerMethod(CustomerModel model)
+        {
+
+            if (model.Editmode == 0)
+            {
+                tblCutomer em = new tblCutomer();
+                em.Firstname = model.FirstName;
+                em.Lastname = model.LastName;
+                em.CountryId = model.ContryID;
+                em.StateId = model.StateID;
+                em.Photo = "test";
+                em.Email = "vivek@gmail.com";
+                em.IsACtive = true;
+                _DB.tblCutomers.Add(em);
+                _DB.SaveChanges();
+                return 1;//add
+            }
+            else if (model.Editmode == 1)
+            {
+                var empdata = _DB.tblCutomers.Where(x => x.Id == model.id).FirstOrDefault();
+                if (empdata != null)
+                {
+                    empdata.Id = model.id;
+                    empdata.Firstname = model.FirstName;
+                    empdata.Lastname = model.LastName;
+                    empdata.CountryId = model.ContryID;
+                    empdata.StateId = model.StateID;
+                    empdata.Photo = "test";
+                    empdata.Email = "vivek@gmail.com";
+                    _DB.SaveChanges();
+                    return 2; //update
+                }                
+            }
+            return 3;// error
+        }
+        public bool deleteCustomerMethod(int id)
+        {
+            var empdata = _DB.tblCutomers.Where(x => x.Id == id).FirstOrDefault();
+            if (empdata != null)
+            {
+                empdata.IsACtive = false;
+                _DB.SaveChanges();
+                return true;
+            }
+            return false; // delete
+        }
+        public List<CustomerModel> mapCustomer(List<CustomerModel> modeldata)
+        {
+            List<CustomerModel> Model = new List<CustomerModel>();
+            if (modeldata.Count > 0)
+            {
+                var count = 0;
+                foreach (var item in modeldata)
+                {
+                    CustomerModel model = new CustomerModel();
+                    count++;
+                    model.count = count;
+                    model.id = item.id;
+                    model.FirstName = item.FirstName;
+                    model.LastName = item.LastName;
+                    var Contrydata = Getcontryname((int)item.ContryID);
+                    var Statedata = Getstatename((int)item.StateID);
+                    if (Contrydata != null)
+                    {
+                        model.Contry = Contrydata.CName;
+                    }
+                    if (Statedata != null)
+                    {
+                        model.State = Statedata.SName;
+                    }
+                    Model.Add(model);
+                }
+            }
+            return Model;
+        }
+        public List<CustomerModel> mapCustomerDB(List<tblCutomer> modeldata)
+        {
+            List<CustomerModel> Model = new List<CustomerModel>();
+            if (modeldata.Count > 0)
+            {
+                var count = 0;
+                foreach (var item in modeldata)
+                {
+                    CustomerModel model = new CustomerModel();
+                    count++;
+                    model.count = count;
+                    model.id = (int)item.Id;
+                    model.FirstName = item.Firstname;
+                    model.LastName = item.Lastname;
+                    var Contrydata = Getcontryname((int)item.CountryId);
+                    var Statedata = Getstatename((int)item.StateId);
+                    if (Contrydata != null)
+                    {
+                        model.Contry = Contrydata.CName;
+                    }
+                    if (Statedata != null)
+                    {
+                        model.State = Statedata.SName;
+                    }
+                    Model.Add(model);
+                }
+            }
+            return Model;
+        }
+        public CustomerModel GetCustomerDetailsById(int Id)
+        {
+            CustomerModel model = new CustomerModel();
+            var data = _DB.tblCutomers.Where(x => x.Id == Id).FirstOrDefault();
+            if (data != null)
+            {
+                // model.Count = 1;
+                model.id = (int)data.Id;
+                model.ContryID = (int)data.CountryId;
+                model.StateID = (int)data.StateId;
+                model.FirstName = data.Firstname;
+                model.LastName = data.Lastname;
+                //model.IsEdit = 1;
+            }
+            return model;
+        }
+        public tblCountry Getcontryname(int Cid)
+        {
+
+            return _DB.tblCountries.Where(x => x.Id == Cid).FirstOrDefault();
+        }
+        public tblState Getstatename(int sid)
+        {
+            return _DB.tblStates.Where(x => x.Id == sid).FirstOrDefault();
+        }
+    }
+}
