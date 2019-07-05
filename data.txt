@@ -636,3 +636,45 @@ export class HttpCallService {
 
   
 }
+
+
+
+
+
+
+
+
+
+
+
+
+import { Component, OnInit } from '@angular/core';
+import { HttpCallService } from 'src/app/httpservices/http.call.service';
+import { DatePipe } from '@angular/common';
+import { Holiday } from 'src/app/models/holiday';
+declare var $: any;
+@Component({
+  selector: 'app-holidaylist',
+  templateUrl: './holidaylist.component.html',
+  styleUrls: ['./holidaylist.component.css']
+})
+export class HolidaylistComponent implements OnInit {
+
+  holidaylist: Holiday[];
+  private _jsonURL = 'assets/jsonmodel/holiday.json';
+  constructor(private httpclient: HttpCallService,private datePipe: DatePipe) {
+  }
+  intime:string;
+  outtime:string;
+  selectedIndex: number = 0;
+
+  ngOnInit() {
+    $('#IndianHolidayCarouselControls, #USHolidayCarouselControls').carousel({
+      interval: 6000,
+    })
+    this.httpclient.get<Holiday>(this._jsonURL).subscribe((holidaylist: any) => {
+      this.holidaylist = holidaylist;
+    });
+  }
+
+}
