@@ -584,3 +584,55 @@ namespace VIVEKPATEL_05312019_mvc.Models
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+import { HttpClient,  HttpHeaders } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import {  Observable } from 'rxjs';
+@Injectable()
+export class HttpCallService {
+
+  constructor(private http: HttpClient) {
+  }
+
+ 
+  public get<T>(URL: string): Observable<T> {
+    return this.http.get<T>(URL);
+    //.catch(this.handleError);
+  }
+
+
+  public post<T>(url: string, body: any): Observable<T> {
+    return this.http.post<T>(url, body)
+      //.catch(this.handleError);
+  }
+
+  public put<T>(url: string, body: string): Observable<T> {
+    return this.http.put<T>(url, body)
+      //.catch(this.handleError);
+  }
+
+  public deleteData<T>(url: string, body: string): Observable<T> {
+    return this.http.delete<T>(url + body)
+      //.catch(this.handleError);
+  }
+
+ 
+  public postWithFileNew<T>(url: string, body: any): Observable<any> {
+    const headers = new HttpHeaders()
+      .set('Content-Type', 'multipart/form-data');
+      headers.append('Accept', 'application/json');  
+    return this.http.post<T>(url, body, { headers: headers })
+      //.catch(this.handleError);
+  }
+
+  
+}
